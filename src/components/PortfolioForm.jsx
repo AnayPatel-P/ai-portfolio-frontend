@@ -3,6 +3,7 @@ import axios from "axios";
 
 export default function PortfolioForm() {
   const [riskLevel, setRiskLevel] = useState("medium");
+  const [tickers, setTickers] = useState("AAPL, MSFT, GOOGL");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -14,9 +15,10 @@ export default function PortfolioForm() {
 
     try {
       const response = await axios.post("https://ai-portfolio-backend.onrender.com/optimize", {
-        risk_level: riskLevel
+        risk_level: riskLevel,
+        tickers: tickers.split(",").map(t => t.trim().toUpperCase()),
       });
-      
+
       setResult(response.data);
     } catch (err) {
       console.error("Optimization request failed:", err);
@@ -31,6 +33,18 @@ export default function PortfolioForm() {
       <h1 className="text-2xl font-bold mb-6 text-center">AI Portfolio Optimizer</h1>
 
       <form onSubmit={handleSubmit}>
+        <label htmlFor="tickers" className="block mb-2 font-medium">
+          Enter Tickers (comma-separated):
+        </label>
+        <input
+          id="tickers"
+          type="text"
+          value={tickers}
+          onChange={(e) => setTickers(e.target.value)}
+          placeholder="e.g. AAPL, MSFT, TSLA"
+          className="w-full border border-gray-300 rounded p-2 mb-4"
+        />
+
         <label htmlFor="risk" className="block mb-2 font-medium">
           Select Risk Level:
         </label>
@@ -55,9 +69,7 @@ export default function PortfolioForm() {
       </form>
 
       {error && (
-        <div className="mt-4 text-red-600 font-medium">
-          {error}
-        </div>
+        <div className="mt-4 text-red-600 font-medium">{error}</div>
       )}
 
       {result && (
