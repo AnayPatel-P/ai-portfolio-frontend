@@ -1,0 +1,28 @@
+plugins = []
+headers = []
+redirects = []
+
+[functions]
+
+[functions."*"]
+
+[build]
+publish = "/Users/anay/Documents/Projects/AI-Portfolio-Optimizer/frontend/dist"
+publishOrigin = "ui"
+commandOrigin = "ui"
+base = "/Users/anay/Documents/Projects/AI-Portfolio-Optimizer/frontend"
+command = "npm run build"
+
+[build.environment]
+
+[build.processing]
+
+[build.processing.css]
+
+[build.processing.html]
+
+[build.processing.images]
+
+[build.processing.js]
+
+[build.services]
