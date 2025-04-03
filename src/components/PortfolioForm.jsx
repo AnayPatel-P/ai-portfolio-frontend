@@ -13,9 +13,10 @@ export default function PortfolioForm() {
     setError(null);
 
     try {
-      const response = await axios.post("http://localhost:8000/optimize", {
-        risk_level: riskLevel,
+      const response = await axios.post("https://ai-portfolio-backend.onrender.com/optimize", {
+        risk_level: riskLevel
       });
+      
       setResult(response.data);
     } catch (err) {
       console.error("Optimization request failed:", err);
