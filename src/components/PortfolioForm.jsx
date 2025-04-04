@@ -28,6 +28,28 @@ export default function PortfolioForm() {
     }
   };
 
+  // ⬇️ Place this function INSIDE the component
+  const downloadCSV = () => {
+    if (!result || !result.weights) return;
+
+    const header = "Ticker,Weight\n";
+    const rows = Object.entries(result.weights)
+      .map(([ticker, weight]) => `${ticker},${(weight * 100).toFixed(2)}%`)
+      .join("\n");
+
+    const csv = header + rows;
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.setAttribute("hidden", "");
+    a.setAttribute("href", url);
+    a.setAttribute("download", "portfolio_weights.csv");
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   return (
     <div className="max-w-xl mx-auto p-6 mt-10 bg-white rounded-xl shadow">
       <h1 className="text-2xl font-bold mb-6 text-center">AI Portfolio Optimizer</h1>
@@ -87,6 +109,13 @@ export default function PortfolioForm() {
               </li>
             ))}
           </ul>
+
+          <button
+            onClick={downloadCSV}
+            className="mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+          >
+            Export to CSV for Power BI
+          </button>
         </div>
       )}
     </div>
