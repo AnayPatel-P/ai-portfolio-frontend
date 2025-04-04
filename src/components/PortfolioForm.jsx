@@ -1,10 +1,20 @@
 import { useState } from "react";
 import axios from "axios";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 export default function PortfolioForm() {
   const [riskLevel, setRiskLevel] = useState("medium");
   const [tickers, setTickers] = useState("AAPL, MSFT, GOOGL");
   const [result, setResult] = useState(null);
+  const [priceHistory, setPriceHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -14,12 +24,16 @@ export default function PortfolioForm() {
     setError(null);
 
     try {
-      const response = await axios.post("https://ai-portfolio-backend.onrender.com/optimize", {
-        risk_level: riskLevel,
-        tickers: tickers.split(",").map(t => t.trim().toUpperCase()),
-      });
+      const response = await axios.post(
+        "https://ai-portfolio-backend.onrender.com/optimize",
+        {
+          risk_level: riskLevel,
+          tickers: tickers.split(",").map((t) => t.trim().toUpperCase()),
+        }
+      );
 
       setResult(response.data);
+      setPriceHistory(response.data.price_history || []);
     } catch (err) {
       console.error("Optimization request failed:", err);
       setError("Failed to fetch optimization results. Please try again.");
@@ -28,7 +42,6 @@ export default function PortfolioForm() {
     }
   };
 
-  // ⬇️ Place this function INSIDE the component
   const downloadCSV = () => {
     if (!result || !result.weights) return;
 
@@ -97,9 +110,17 @@ export default function PortfolioForm() {
       {result && (
         <div className="mt-6">
           <h2 className="text-xl font-semibold mb-2">Results</h2>
-          <p><strong>Expected Return:</strong> {(result.expected_return * 100).toFixed(2)}%</p>
-          <p><strong>Volatility:</strong> {(result.expected_volatility * 100).toFixed(2)}%</p>
-          <p><strong>Sharpe Ratio:</strong> {result.sharpe_ratio.toFixed(2)}</p>
+          <p>
+            <strong>Expected Return:</strong>{" "}
+            {(result.expected_return * 100).toFixed(2)}%
+          </p>
+          <p>
+            <strong>Volatility:</strong>{" "}
+            {(result.expected_volatility * 100).toFixed(2)}%
+          </p>
+          <p>
+            <strong>Sharpe Ratio:</strong> {result.sharpe_ratio.toFixed(2)}
+          </p>
 
           <h3 className="mt-4 font-semibold">Portfolio Weights:</h3>
           <ul className="list-disc ml-6">
@@ -116,6 +137,30 @@ export default function PortfolioForm() {
           >
             Export to CSV for Power BI
           </button>
+
+          {priceHistory.length > 0 && (
+            <div className="mt-8">
+              <h3 className="text-lg font-semibold mb-2">Price History</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={priceHistory}>
+                  <XAxis dataKey="Date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  {tickers.split(",").map((ticker, idx) => (
+                    <Line
+                      key={ticker.trim()}
+                      type="monotone"
+                      dataKey={ticker.trim().toUpperCase()}
+                      stroke={`hsl(${(idx * 60) % 360}, 70%, 50%)`}
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
       )}
     </div>
