@@ -7,7 +7,7 @@ export default function PortfolioForm() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [priceHistory, setPriceHistory] = useState([]);
+  const [recommendedTickers, setRecommendedTickers] = useState([]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,10 +21,27 @@ export default function PortfolioForm() {
       });
 
       setResult(response.data);
-      setPriceHistory(response.data.price_history || []);
     } catch (err) {
       console.error("Optimization request failed:", err);
       setError("Failed to fetch optimization results. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getRecommendedPortfolio = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await axios.get("https://ai-portfolio-backend.onrender.com/recommend", {
+        params: { risk_level: riskLevel },
+      });
+      const tickersList = res.data.tickers;
+      setTickers(tickersList.join(", "));
+      setRecommendedTickers(tickersList);
+    } catch (err) {
+      console.error("Failed to fetch recommended portfolio:", err);
+      setError("Failed to fetch recommended portfolio.");
     } finally {
       setLoading(false);
     }
@@ -39,7 +56,6 @@ export default function PortfolioForm() {
       .join("\n");
 
     const csv = header + rows;
-
     const blob = new Blob([csv], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -51,30 +67,13 @@ export default function PortfolioForm() {
     document.body.removeChild(a);
   };
 
-  const fetchRecommendedTickers = async () => {
-    try {
-      const res = await axios.post("https://ai-portfolio-backend.onrender.com/recommend", {
-        risk_level: riskLevel
-      });
-      if (res.data.tickers) {
-        setTickers(res.data.tickers.join(", "));
-      }
-    } catch (err) {
-      console.error("Failed to fetch recommended tickers:", err);
-      setError("Could not fetch recommended portfolio.");
-    }
-  };
-
   return (
     <div className="max-w-xl mx-auto p-6 mt-10 bg-white rounded-xl shadow">
       <h1 className="text-2xl font-bold mb-6 text-center">AI Portfolio Optimizer</h1>
 
       <form onSubmit={handleSubmit}>
-        <label htmlFor="tickers" className="block mb-2 font-medium">
-          Enter Tickers (comma-separated):
-        </label>
+        <label className="block mb-2 font-medium">Enter Tickers (comma-separated):</label>
         <input
-          id="tickers"
           type="text"
           value={tickers}
           onChange={(e) => setTickers(e.target.value)}
@@ -82,19 +81,8 @@ export default function PortfolioForm() {
           className="w-full border border-gray-300 rounded p-2 mb-4"
         />
 
-        <button
-          type="button"
-          onClick={fetchRecommendedTickers}
-          className="w-full bg-yellow-500 text-white py-2 mb-4 rounded hover:bg-yellow-600 transition"
-        >
-          Recommended Portfolio
-        </button>
-
-        <label htmlFor="risk" className="block mb-2 font-medium">
-          Select Risk Level:
-        </label>
+        <label className="block mb-2 font-medium">Select Risk Level:</label>
         <select
-          id="risk"
           value={riskLevel}
           onChange={(e) => setRiskLevel(e.target.value)}
           className="w-full border border-gray-300 rounded p-2 mb-4"
@@ -104,17 +92,31 @@ export default function PortfolioForm() {
           <option value="high">High</option>
         </select>
 
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
-          disabled={loading}
-        >
-          {loading ? "Optimizing..." : "Optimize Portfolio"}
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="submit"
+            className="w-1/2 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+            disabled={loading}
+          >
+            {loading ? "Optimizing..." : "Optimize"}
+          </button>
+          <button
+            type="button"
+            onClick={getRecommendedPortfolio}
+            className="w-1/2 bg-purple-600 text-white py-2 rounded hover:bg-purple-700 transition"
+            disabled={loading}
+          >
+            Get Recommended Portfolio
+          </button>
+        </div>
       </form>
 
-      {error && (
-        <div className="mt-4 text-red-600 font-medium">{error}</div>
+      {error && <div className="mt-4 text-red-600 font-medium">{error}</div>}
+
+      {recommendedTickers.length > 0 && (
+        <div className="mt-4 text-sm text-gray-600">
+          Recommended Tickers: {recommendedTickers.join(", ")}
+        </div>
       )}
 
       {result && (
