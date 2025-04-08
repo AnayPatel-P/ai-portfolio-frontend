@@ -1,5 +1,13 @@
 import { useState } from "react";
 import axios from "axios";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer
+} from "recharts";
 
 export default function PortfolioForm() {
   const [riskLevel, setRiskLevel] = useState("medium");
@@ -8,6 +16,8 @@ export default function PortfolioForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [recommendedTickers, setRecommendedTickers] = useState([]);
+  const [priceHistory, setPriceHistory] = useState([]);
+  const [tickersArray, setTickersArray] = useState([]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,6 +31,8 @@ export default function PortfolioForm() {
       });
 
       setResult(response.data);
+      setPriceHistory(response.data.price_history || []);
+      setTickersArray(tickers.split(",").map(t => t.trim().toUpperCase()));
     } catch (err) {
       console.error("Optimization request failed:", err);
       setError("Failed to fetch optimization results. Please try again.");
@@ -141,6 +153,28 @@ export default function PortfolioForm() {
           >
             Export to CSV for Power BI
           </button>
+
+          {priceHistory.length > 0 && (
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold mb-2">Price History (Normalized)</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={priceHistory}>
+                  <XAxis dataKey="Date" />
+                  <YAxis domain={['auto', 'auto']} />
+                  <Tooltip />
+                  {tickersArray.map((ticker) => (
+                    <Line
+                      key={ticker}
+                      type="monotone"
+                      dataKey={ticker}
+                      stroke="#8884d8"
+                      dot={false}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
       )}
     </div>
